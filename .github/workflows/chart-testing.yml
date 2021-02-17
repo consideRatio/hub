@@ -17,8 +17,12 @@ jobs:
         with:
           command: lint
           config: .ct.yaml
-      - name: Create kind cluster
-        uses: helm/kind-action@v1.0.0
+      - name: Create k3s cluster
+        uses: jupyterhub/action-k3s-helm@v1
+        with:
+          k3s-channel: v1.19
+          traefik-enabled: false
+          metrics-enabled: false
         if: steps.lint.outputs.changed == 'true'
       - name: Install chart
         uses: helm/chart-testing-action@v1.0.0
@@ -26,3 +30,21 @@ jobs:
         with:
           command: install
           config: .ct.yaml
+
+      # GitHub Action reference: https://github.com/jupyterhub/action-k8s-await-workloads
+      - name: Await chart readiness
+        uses: jupyterhub/action-k8s-await-workloads@v1
+        if: steps.lint.outputs.changed == 'true'
+        with:
+          workloads: "" # all
+          namespace: "" # default
+          timeout: 150
+          max-restarts: 0
+
+      # GitHub Action reference: https://github.com/jupyterhub/action-k8s-namespace-report
+      - name: Emit namespace report
+        uses: jupyterhub/action-k8s-namespace-report@v1
+        if: steps.lint.outputs.changed == 'true'
+        with:
+          namespace: "" # default
+          important-workloads: "" # always show logs of these workloads
