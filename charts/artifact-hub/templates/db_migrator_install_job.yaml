@@ -5,6 +5,7 @@ metadata:
   name: {{ include "chart.resourceNamePrefix" . }}db-migrator-install
 spec:
   template:
+    # DOH
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
